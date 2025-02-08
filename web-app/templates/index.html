@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Car Mapping</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="main-container">
+      <header>
+        <h1>Live Car Mapping</h1>
+        <p>
+          Monitor and control your car in real-time with this interactive map.
+        </p>
+      </header>
+
+      <div class="map-container">
+        <img id="map" src="" alt="Live Map" />
+      </div>
+
+      <div class="controls">
+        <button id="start-button" class="btn primary-btn">Start Mapping</button>
+        <button id="stop-button" class="btn secondary-btn">Stop Mapping</button>
+      </div>
+
+      <footer>
+        <p>Made with ♥ by Prinjal Poudel | Smart Car Navigation System</p>
+      </footer>
+    </div>
+
+    <script>
+      function sendSensorData() {
+        var sensorData = {
+          distance1: 100,
+          distance2: 150,
+          distance3: 200,
+        };
+
+        fetch("/map", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(sensorData),
+        })
+          .then((response) => response.blob())
+          .then((imageBlob) => {
+            var img = document.getElementById("map");
+            img.src = URL.createObjectURL(imageBlob);
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      var mappingInterval;
+      document
+        .getElementById("start-button")
+        .addEventListener("click", function () {
+          mappingInterval = setInterval(sendSensorData, 2000);
+        });
+
+      document
+        .getElementById("stop-button")
+        .addEventListener("click", function () {
+          clearInterval(mappingInterval);
+        });
+    </script>
+  </body>
+</html>
