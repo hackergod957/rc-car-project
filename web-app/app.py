@@ -24,8 +24,8 @@ def get_map():
     # Calculate obstacle positions based on distances
     # Assume that each sensor is placed at an angle relative to the car
     angle1 = 0  # Sensor 1 facing right (0 degrees)
-    angle2 = 120  # Sensor 2 facing 120 degrees
-    angle3 = 240  # Sensor 3 facing 240 degrees
+    angle2 = 90  # Sensor 2 facing 120 degrees
+    angle3 = 270  # Sensor 3 facing 240 degrees
     
     # Calculate obstacle positions
     def calculate_obstacle_position(distance, angle):
