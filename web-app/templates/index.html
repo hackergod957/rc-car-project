@@ -3,42 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Car Mapping</title>
+    <title>Live Car Mapping</title>
     <link rel="stylesheet" href="styles.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
-      rel="stylesheet"
-    />
   </head>
   <body>
-    <div class="main-container">
-      <header>
-        <h1>Live Car Mapping</h1>
-        <p>
-          Monitor and control your car in real-time with this interactive map.
-        </p>
-      </header>
-
+    <div class="container">
+      <h1>Live Car Mapping</h1>
       <div class="map-container">
         <img id="map" src="" alt="Live Map" />
       </div>
-
-      <div class="controls">
-        <button id="start-button" class="btn primary-btn">Start Mapping</button>
-        <button id="stop-button" class="btn secondary-btn">Stop Mapping</button>
-      </div>
-
-      <footer>
-        <p>Made with ♥ by Prinjal Poudel | Smart Car Navigation System</p>
-      </footer>
+      <button id="start-button">Start Mapping</button>
+      <button id="stop-button">Stop Mapping</button>
     </div>
 
     <script>
       function sendSensorData() {
         var sensorData = {
-          distance1: 100,
-          distance2: 150,
-          distance3: 200,
+          distance: 100, // Example distance data (in cm)
         };
 
         fetch("/map", {
@@ -49,9 +30,10 @@
           body: JSON.stringify(sensorData),
         })
           .then((response) => response.blob())
-          .then((imageBlob) => {
+          .then((data) => {
             var img = document.getElementById("map");
-            img.src = URL.createObjectURL(imageBlob);
+            var url = URL.createObjectURL(data);
+            img.src = url; // Set the map image
           })
           .catch((error) => console.error("Error:", error));
       }
@@ -60,13 +42,13 @@
       document
         .getElementById("start-button")
         .addEventListener("click", function () {
-          mappingInterval = setInterval(sendSensorData, 2000);
+          mappingInterval = setInterval(sendSensorData, 2000); // Send data every 2 seconds
         });
 
       document
         .getElementById("stop-button")
         .addEventListener("click", function () {
-          clearInterval(mappingInterval);
+          clearInterval(mappingInterval); // Stop sending data
         });
     </script>
   </body>

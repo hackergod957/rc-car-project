@@ -22,7 +22,7 @@ void loop() {
     long distance1 = getDistance(trigPin1, echoPin1);
 
     // Send only one distance value
-    Serial.println(String(distance1));
+    Serial.println(distance1);  // Directly print the distance value without formatting
   }
 }
 

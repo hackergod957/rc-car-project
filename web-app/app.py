@@ -1,50 +1,56 @@
-import math
-import cv2
+import os
+import io
+from flask import Flask, request, render_template, send_file
+import matplotlib.pyplot as plt
 import numpy as np
-from flask import Flask, render_template, request, send_file
 
 app = Flask(__name__)
 
-@app.route('/')
-def index():
-    return render_template('index.html')  # Display the webpage
-
+# Route to display the map or plot
 @app.route('/map', methods=['POST'])
 def get_map():
-    # Get real data (distance from one ultrasonic sensor) from POST request
-    data = request.json
-    distance1 = data['distance1']  # Distance from the single sensor
-    
-    # Fixed car position (in the center of the map)
-    map_size = 500
-    car_pos = (map_size // 2, map_size - 30)
-    
-    # Sensor facing forward (angle = 0 degrees)
-    angle1 = 0  
-    
-    # Calculate obstacle position based on the sensor reading
-    def calculate_obstacle_position(distance, angle):
-        x = int(car_pos[0] + distance * math.cos(math.radians(angle)))
-        y = int(car_pos[1] - distance * math.sin(math.radians(angle)))
-        return x, y
-    
-    # Get the obstacle position
-    obstacle1_pos = calculate_obstacle_position(distance1, angle1)
-    
-    # Create a blank white map
-    img = np.ones((map_size, map_size, 3), dtype=np.uint8) * 255
-    
-    # Draw the car (blue dot)
-    cv2.circle(img, car_pos, 5, (255, 0, 0), -1)  # Blue dot for car
-    
-    # Draw the single obstacle (red dot)
-    cv2.circle(img, obstacle1_pos, 5, (0, 0, 255), -1)  # Red dot for obstacle
-    
-    # Save the image to a temporary file
-    cv2.imwrite("map.jpg", img)
-    
-    # Return the image as a response
-    return send_file("map.jpg", mimetype='image/jpeg')
+    try:
+        # Handle POST request with JSON data from NodeMCU
+        data = request.get_json()
+        print(f"Received data: {data}")  # Log the received data
+
+        # Ensure 'distance' is present in the data
+        if 'distance' not in data:
+            return {"error": "Missing 'distance' in the request body"}, 400
+        
+        # Extract the distance value
+        distance = data['distance']
+        
+        # Create a simple graph (polar plot) based on the distance
+        fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+        
+        # Polar plot (distance data from sensor)
+        ax.set_theta_zero_location('N')  # Start at the North (0 degrees)
+        ax.set_theta_direction(-1)  # Clockwise
+        
+        # Example: use distance as the radius, plotting at different angles
+        angles = np.linspace(0, 2 * np.pi, 100)
+        radii = np.full_like(angles, distance)
+
+        ax.plot(angles, radii)
+
+        ax.set_title(f"Distance: {distance} cm")
+
+        # Save the plot to a BytesIO object
+        img = io.BytesIO()
+        fig.savefig(img, format='png')
+        img.seek(0)  # Rewind the image
+
+        # Return the plot image as a response
+        return send_file(img, mimetype='image/png')
+
+    except Exception as e:
+        return {"error": str(e)}, 500
+
+# Default route for testing or displaying HTML page
+@app.route('/')
+def index():
+    return render_template('index.html')  # Ensure you have an index.html template
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

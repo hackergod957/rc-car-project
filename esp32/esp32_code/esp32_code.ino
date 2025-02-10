@@ -1,72 +1,56 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 
-// Wi-Fi credentials
+// Wi-Fi credentials (not needed anymore for sensor-only use)
 const char* ssid = "cybermystic_2.4";          // Replace with your Wi-Fi SSID
-const char* password = "Cyber@mystic_007";     // Replace with your Wi-Fi password
+const char* password = "Cyber@mystic_007";   // Replace with your Wi-Fi password
 
-// Flask API endpoint
-const String flask_url = "http://192.168.1.16:5000/map"; // Replace with your Flask server's IP address
+// Pins for Ultrasonic Sensor
+const int trigPin = D2;  // Change this as per your wiring
+const int echoPin = D1;  // Change this as per your wiring
+
+// Variables for time-based data sending
+unsigned long previousMillis = 0;
+const long interval = 2000;  // 2 seconds interval to take data
 
 void setup() {
-  Serial.begin(115200); // Match with Arduino's baud rate
-
-  // Connect to Wi-Fi
-  Serial.println("Connecting to Wi-Fi...");
-  WiFi.begin(ssid, password);
+  Serial.begin(115200);  // Start Serial Monitor
   
+  // Connect to Wi-Fi (not needed for sensor-only mode, but left in case you want to use Wi-Fi in the future)
+  WiFi.begin(ssid, password); // Connect to Wi-Fi
+
+  // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    Serial.println("Connecting...");
+    Serial.println("Connecting to Wi-Fi...");
   }
-  
-  Serial.println("Connected to Wi-Fi!");
+  Serial.println("Connected to Wi-Fi");
+
+  // Initialize pins
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    String sensorData = Serial.readStringUntil('\n');  // Read the data until newline
+  unsigned long currentMillis = millis();
+  
+  // Take data every 2 seconds without using delay
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;  // Update the last time data was taken
     
-    // Extract the data for just one sensor (e.g., distance1)
-    int separator = sensorData.indexOf(","); // Looking for the first separator
-    String distance1 = sensorData.substring(0, separator); // Extract the first sensor data
+    // Measure distance from ultrasonic sensor
+    long duration, distance;
     
-    // Print the sensor data to Serial Monitor
-    Serial.print("Sensor Data: ");
-    Serial.println(distance1);
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
     
-    // Send the data to Flask server
-    sendDataToFlask(distance1);
+    duration = pulseIn(echoPin, HIGH);
+    distance = (duration / 2) / 29.1;  // Convert duration to distance in cm
     
-    delay(2000);  // Delay between sending data
-  }
-}
-
-void sendDataToFlask(String distance1) {
-  if (WiFi.status() == WL_CONNECTED) {
-    WiFiClient client;
-    HTTPClient http;
-    
-    http.begin(client, flask_url);  // Begin HTTP request
-    http.addHeader("Content-Type", "application/json");
-
-    // Create JSON object to send
-    String jsonData = "{\"distance1\": " + distance1 + "}";
-
-    // Send the POST request
-    int httpResponseCode = http.POST(jsonData);
-
-    // Handle the response
-    if (httpResponseCode > 0) {
-      Serial.println("Data sent successfully");
-      Serial.println("Response Code: " + String(httpResponseCode));
-    } else {
-      Serial.println("Failed to send data");
-    }
-
-    // End the HTTP request
-    http.end();
-  } else {
-    Serial.println("WiFi not connected");
+    Serial.print("Distance: ");
+    Serial.println(distance);  // Display the distance in the Serial Monitor
   }
 }
